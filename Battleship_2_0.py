@@ -1,6 +1,21 @@
 from tkinter import *
 import random
 
+class MyDialog:
+    def __init__(self, parent, prompt, title):
+        top = self.top = Toplevel(parent)
+        top.title(title)
+        Label(top, text=prompt).pack()
+        self.e = Entry(top)
+        self.e.pack(padx=5)
+        b = Button(top, text="OK", command=self.ok)
+        b.pack(pady=5)
+        self.value = None
+
+    def ok(self):
+        print("value is " + self.e.get())
+        self.value = self.e.get()
+        self.top.destroy()
 
 #Klass skepp
 class Ship:
@@ -521,7 +536,9 @@ class Gameboard:
         pass
 
     def singleplayer(self):
-        self.player_one_name = tkMessageBox.askquestion("Please Enter Player Ones Name")
+        #self.player_one_name = tkMessageBox.askquestion("Please Enter Player Ones Name")
+        dialog = MyDialog(self.frame, "Ange ditt namn", "Namn")
+        self.player_one_name = dialog.value
         self.matrix2 = Matrix(self.master, self, 2, cpu = True)
         self.matrix1 = Matrix(self.master, self, 1, cpu = True)
         self.current_turn()
