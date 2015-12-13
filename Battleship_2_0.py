@@ -1,6 +1,7 @@
 from tkinter import *
 import random
 
+#Pop-up ruta när man skriver namn
 class MyDialog:
     def __init__(self, parent, prompt, title):
         top = self.top = Toplevel(parent)
@@ -152,19 +153,27 @@ class Square:
                     self.square["text"]                                = "#"
                     self.marked                                        = True
                     self.matrix.mark_closeby_squares(self, self.ship)
-                    self.matrix.clear_info()
+                    self.gameboard.clear_info()
                     self.matrix.is_all_ships_sunked()
                 elif (self.square["text"] != "X") and (self.square["text"] != "#"):
                     self.square["text"]                                = "X"
-                    self.matrix.change_player()
+                    self.gameboard.change_player()
                     self.matrix.computer_move()
                 else:
-                    self.matrix.try_again()
+                    self.gameboard.set_info("Try Again")
                 print("rutan %d %d" % (self.row, self.column))
             else:
-                self.matrix.wrong_clicked()
-        elif self.gameboard.mode == 20:   #  placing ships
-            self.matrix.try_place_ship(self.row, self.column)
+                self.gameboard.set_info("Shame Shame I Know Your Name")
+        elif self.gameboard.mode == 20: #  placing ships
+            if self.gameboard.singleplayer_mode:
+                self.gameboard.current = 2
+                if self.matrix.is_my_turn():
+                    self.matrix.try_place_ship(self.row, self.column)
+                else:
+                    self.gameboard.set_info("Can't Place Ship There")
+            else:
+                self.matrix.try_place_ship(self.row, self.column)
+
         return
 
     #Dator spelar
@@ -174,13 +183,13 @@ class Square:
             self.square["text"]                              = "#"
             self.marked                                      = True
             self.matrix.mark_closeby_squares(self, self.ship)
-            self.matrix.clear_info()
+            self.gameboard.clear_info()
             self.matrix.is_all_ships_sunked()
 
         elif (self.square["text"] != "X") and (self.square["text"] != "#"):
             self.square["text"]                              = "X"
             finished                                         = True
-            self.matrix.change_player()
+            self.gameboard.change_player()
 
 
         print("rutan %d %d" % (self.row, self.column))
@@ -305,24 +314,26 @@ class Matrix:
     def try_place_ship(self, row, column):
         vertical = self.gameboard.current_ship_vertical
         extent   = self.gameboard.current_ship_extent
-        if self.possible_to_place_ship(row, column, vertical, extent):
-            ship = Ship(row, column, vertical, extent, self.squares, self.rows, self.columns)
-            ship.show_ship()
-            self.ships.append(ship)
-            self.nr_of_ships = self.nr_of_ships + 1
-            if extent == 1:
-                self.nr_of_1_ships = self.nr_of_1_ships + 1
-            elif extent == 2:
-                self.nr_of_2_ships = self.nr_of_2_ships + 1
-            elif extent == 3:
-                self.nr_of_3_ships = self.nr_of_3_ships + 1
-            elif extent == 4:
-                self.nr_of_4_ships = self.nr_of_4_ships + 1
-            elif extent == 5:
-                self.nr_of_5_ships = self.nr_of_5_ships + 1
+        if self.nr_of_ships < 5:
+            if self.possible_to_place_ship(row, column, vertical, extent):
+                ship = Ship(row, column, vertical, extent, self.squares, self.rows, self.columns)
+                ship.show_ship()
+                self.ships.append(ship)
+                self.nr_of_ships = self.nr_of_ships + 1
+                if extent == 1:
+                    self.nr_of_1_ships = self.nr_of_1_ships + 1
+                elif extent == 2:
+                    self.nr_of_2_ships = self.nr_of_2_ships + 1
+                elif extent == 3:
+                    self.nr_of_3_ships = self.nr_of_3_ships + 1
+                elif extent == 4:
+                    self.nr_of_4_ships = self.nr_of_4_ships + 1
+                elif extent == 5:
+                    self.nr_of_5_ships = self.nr_of_5_ships + 1
+            else:
+                self.gameboard.set_info("You Can't Place A Ship There")
         else:
-            self.gameboard.set_info("can not place ship there")
-        pass
+            self.gameboard.set_info("You Have Place Maximum Amount Of Ships")
 
     #krav för placering av skepp
     def possible_to_place_ship(self, in_x, in_y, vertical, extent):
@@ -400,24 +411,6 @@ class Matrix:
         square = self.squares[x-1][y-1]
         return square.try_click()
 
-    #turodning
-    def change_player(self):
-        self.gameboard.change_player()
-        return
-
-    #felhantering fel spelare
-    def wrong_clicked(self):
-        return self.gameboard.wrong_clicked()
-
-    #Felhantering klickat på markerad ruta
-    def try_again(self):
-        self.gameboard.try_again()
-        return
-
-    #Rensa notis ruta
-    def clear_info(self):
-        self.gameboard.clear_info()
-        return
 
     #Datorn spelar
     def computer_move(self):
@@ -517,12 +510,12 @@ class Gameboard:
         self.btn_singleplayer.grid(row = 1, column  = 1)
         self.btn_multiplayer   = Button(frame, text ="[MULTIPLAYER]", command=self.multiplayer)
         self.btn_multiplayer.grid(row = 1, column   = 2)
+        self.btn_exit_game     = Button(frame, text ="[Exit Game]", command=self.quit)
+        self.btn_exit_game.grid(row = 1, column = 10)
         self.current_player = Label(master, text    = "", fg = "green")
         self.current_player.grid(row = 2, column    = 1)
-        self.current   = 1
         self.info      = Label(master, text = "", fg = "red")
         self.info.grid(row = 2, column = 2)
-
         self.matrix1   = None
         self.matrix2   = None
         self.player_one_name = None
@@ -551,16 +544,11 @@ class Gameboard:
         self.clear_info()
         return
 
-    def wrong_clicked(self):
-        self.info["text"] = "Shame Shame I Know Your Name"
-        return
+    def quit(self):
+        root.destroy()
 
     def set_info(self,text):
         self.info["text"] = text
-
-    def try_again(self):
-        self.info["text"] = "Try again!"
-        return
 
     def clear_info(self):
         self.info["text"] = ""
@@ -625,15 +613,15 @@ class Gameboard:
         return
 
     def set_ship_button_highlight(self):
-        self.btn_1_ship["fg"] = "black"
-        self.btn_2_ship["fg"] = "black"
+        self.btn_1_ship["state"] = NORMAL
+        self.btn_2_ship["state"] = NORMAL
         self.btn_3_ship["fg"] = "black"
         self.btn_4_ship["fg"] = "black"
         self.btn_5_ship["fg"] = "black"
         if self.current_ship_extent == 1:
-            self.btn_1_ship["fg"] = "red"
+            self.btn_1_ship.flash()
         elif self.current_ship_extent == 2:
-            self.btn_2_ship["fg"] = "red"
+            self.btn_2_ship.flash()
         elif self.current_ship_extent == 3:
             self.btn_3_ship["fg"] = "red"
         elif self.current_ship_extent == 4:
@@ -643,12 +631,15 @@ class Gameboard:
         return
 
     def start_game(self):
+
         if self.singleplayer_mode:
             self.matrix1.auto_place_ships(self.matrix2)
             self.matrix2.hide_ships()
+
         else:
             self.matrix1.hide_ships()
             self.matrix2.hide_ships()
+
         if self.can_we_start():
             self.btn_1_ship.grid_forget()
             self.btn_2_ship.grid_forget()
@@ -658,11 +649,11 @@ class Gameboard:
             self.btn_vertical_on_off.grid_forget()
             self.btn_start_game.grid_forget()
             # destroy other shipplacer mode = 20 buttons
-
-            self.current_turn()
             self.mode = 30
+            self.current   = 1
         else:
             self.info["text"] = "Not equal amount of ships between players"
+
         return
 
     def can_we_start(self):
@@ -734,7 +725,6 @@ class Gameboard:
 
         self.mode = 20
         return
-
 
 
 root = Tk()
