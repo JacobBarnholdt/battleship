@@ -1,6 +1,9 @@
 from tkinter import *
 import random
 
+from Highscore import Highscores
+
+
 #Pop-up ruta när man skriver namn
 class MyDialog:
     def __init__(self, parent, prompt, title):
@@ -152,11 +155,13 @@ class Square:
                 if (self.ship     != None) and (self.square["text"]   != "#"):
                     self.square["text"]                                = "#"
                     self.marked                                        = True
+                    self.matrix.nr_of_clicks = self.matrix.nr_of_clicks + 1
                     self.matrix.mark_closeby_squares(self, self.ship)
                     self.gameboard.clear_info()
                     self.matrix.is_all_ships_sunked()
                 elif (self.square["text"] != "X") and (self.square["text"] != "#"):
                     self.square["text"]                                = "X"
+                    self.matrix.nr_of_clicks = self.matrix.nr_of_clicks + 1
                     self.gameboard.change_player()
                     self.matrix.computer_move()
                 else:
@@ -169,47 +174,34 @@ class Square:
             if self.gameboard.singleplayer_mode:
                 self.gameboard.current = 2
                 if self.matrix.is_my_turn():
-                    self.matrix.try_place_ship(self.row, self.column)
+                    if (self.matrix.nr_of_5_ships > 0) and (self.gameboard.current_ship_extent == 5):
+                        self.gameboard.set_info("Can't Place more than one Carrier")
+                    else:
+                        self.matrix.try_place_ship(self.row, self.column)
                 else:
                     self.gameboard.set_info("Can't Place Ship There")
             else:
-                if self.gameboard.matrix1.nr_of_ships < 5:
+                if self.gameboard.matrix2.nr_of_ships < 5:
+                    self.gameboard.set_info("Player " + self.gameboard.player_two_name + "s turn")
                     self.gameboard.current = 1
                     if self.matrix.is_my_turn():
                         self.matrix.try_place_ship(self.row, self.column)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of destroyers: "+str(self.gameboard.matrix1.nr_of_1_ships))
-                        self.number_of_nr_destroyers.grid(row = 6, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of Cruisers: "+str(self.gameboard.matrix1.nr_of_2_ships))
-                        self.number_of_nr_destroyers.grid(row = 7, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of Submarines: "+str(self.gameboard.matrix1.nr_of_3_ships))
-                        self.number_of_nr_destroyers.grid(row = 8, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of Battleships: "+str(self.gameboard.matrix1.nr_of_4_ships))
-                        self.number_of_nr_destroyers.grid(row = 9, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of Carriers: "+str(self.gameboard.matrix1.nr_of_5_ships))
-                        self.number_of_nr_destroyers.grid(row = 10, column = 1)
+                        if self.matrix.nr_of_ships == 5:
+                            self.gameboard.set_info("Player " + self.gameboard.player_one_name + "s turn")
                     else:
                         self.gameboard.set_info("Can't Place Ship There")
-                else:
-                    if self.gameboard.matrix2.nr_of_ships < 5:
-                        self.info = Label(self.gameboard.master, text = "You have to place the same ships as " + self.gameboard.player_one_name +":")
-                        self.info.grid(row = 4, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of destroyers: "+str(self.gameboard.matrix1.nr_of_1_ships))
-                        self.number_of_nr_destroyers.grid(row = 6, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of Cruisers: "+str(self.gameboard.matrix1.nr_of_2_ships))
-                        self.number_of_nr_destroyers.grid(row = 7, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of Submarines: "+str(self.gameboard.matrix1.nr_of_3_ships))
-                        self.number_of_nr_destroyers.grid(row = 8, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of Battleships: "+str(self.gameboard.matrix1.nr_of_4_ships))
-                        self.number_of_nr_destroyers.grid(row = 9, column = 1)
-                        self.number_of_nr_destroyers = Label(self.gameboard.master, text = "Amount of Carriers: "+str(self.gameboard.matrix1.nr_of_5_ships))
-                        self.number_of_nr_destroyers.grid(row = 10, column = 1)
-                        self.gameboard.current = 2
-                        if self.matrix.is_my_turn():
-                            self.matrix.try_place_ship(self.row, self.column)
-                        else:
-                            self.gameboard.set_info("You Can't Place a Ship There")
+                elif self.gameboard.matrix1.nr_of_ships < 5:
+                    self.gameboard.set_info("Player " + self.gameboard.player_one_name + "s turn")
+                    self.gameboard.current = 2
+                    if self.matrix.is_my_turn():
+                        self.matrix.try_place_ship(self.row, self.column)
+                        if self.matrix.nr_of_ships == 5:
+                            self.gameboard.set_info("You are now ready to start game")
                     else:
-                        self.gameboard.set_info("You are now ready to start game")
+                        self.gameboard.set_info("You Can't Place a Ship There")
+                else:
+                    self.gameboard.set_info("You are now ready to start game")
+
 
 
         return
@@ -220,12 +212,14 @@ class Square:
         if (self.ship     != None) and (self.square["text"] != "#"):
             self.square["text"]                              = "#"
             self.marked                                      = True
+            self.matrix.nr_of_clicks = self.matrix.nr_of_clicks + 1
             self.matrix.mark_closeby_squares(self, self.ship)
             self.gameboard.clear_info()
             self.matrix.is_all_ships_sunked()
 
         elif (self.square["text"] != "X") and (self.square["text"] != "#"):
             self.square["text"]                              = "X"
+            self.matrix.nr_of_clicks = self.matrix.nr_of_clicks + 1
             finished                                         = True
             self.gameboard.change_player()
 
@@ -247,6 +241,9 @@ class Square:
         self.ship           = ship
         self.square["text"] = "O"
         return
+
+    def remove_ship(self):
+        self.ship = None
 
     def show_hide_ships(self):
         if self.square["text"] == "O":
@@ -285,8 +282,28 @@ class Matrix:
         self.nr_of_5_ships = 0
         self.nr_of_ships = 0
         self.name = name
+        self.nr_of_clicks = 0
 
-        #placerar ut skeppen i de olika rutorna på matricen
+        if self.matrix_number == 1:
+            column = 1
+        else:
+            column = 2
+
+        self.lbl_number_of_destroyers = Label(self.gameboard.master, text = "Player: "+ self.name)
+        self.lbl_number_of_destroyers.grid(row = 6, column = column)
+        self.lbl_number_of_destroyers = Label(self.gameboard.master, text = "Amount of destroyers: "+str(self.nr_of_1_ships))
+        self.lbl_number_of_destroyers.grid(row = 7, column = column)
+        self.lbl_number_of_cruiser = Label(self.gameboard.master, text = "Amount of Cruisers: "+str(self.nr_of_2_ships))
+        self.lbl_number_of_cruiser.grid(row = 8, column= column)
+        self.lbl_number_of_submarines = Label(self.gameboard.master, text = "Amount of Submarines: "+str(self.nr_of_3_ships))
+        self.lbl_number_of_submarines.grid(row = 9, column = column)
+        self.lbl_number_of_battleship = Label(self.gameboard.master, text = "Amount of Battleships: "+str(self.nr_of_4_ships))
+        self.lbl_number_of_battleship.grid(row = 10, column = column)
+        self.lbl_number_of_carriers = Label(self.gameboard.master, text = "Amount of Carriers: "+str(self.nr_of_5_ships))
+        self.lbl_number_of_carriers.grid(row = 11, column = column)
+
+
+        #Skapar spelplanen
         for row in range(1, self.rows+1):
             squarerows = []
 
@@ -303,6 +320,13 @@ class Matrix:
         #self.ships.append(self.ship_making_without_random(5,7,2,True))
 
         return
+
+    def calculate_score(self):
+        ship_square_count = 0
+        for ship in self.ships:
+            ship_square_count = ship.extent + ship_square_count
+        score = self.nr_of_clicks - ship_square_count
+        return score
 
     def auto_place_ships(self, other_matrix):
         for ship1s in range(0,other_matrix.nr_of_1_ships):
@@ -351,48 +375,35 @@ class Matrix:
     def try_place_ship(self, row, column):
         vertical = self.gameboard.current_ship_vertical
         extent   = self.gameboard.current_ship_extent
-        if self.gameboard.singleplayer_mode:
-            if self.nr_of_ships < 5:
-                if self.possible_to_place_ship(row, column, vertical, extent):
-                    ship = Ship(row, column, vertical, extent, self.squares, self.rows, self.columns)
-                    ship.show_ship()
-                    self.ships.append(ship)
-                    self.nr_of_ships = self.nr_of_ships + 1
-                    if extent == 1:
-                        self.nr_of_1_ships = self.nr_of_1_ships + 1
-                    elif extent == 2:
-                        self.nr_of_2_ships = self.nr_of_2_ships + 1
-                    elif extent == 3:
-                        self.nr_of_3_ships = self.nr_of_3_ships + 1
-                    elif extent == 4:
-                        self.nr_of_4_ships = self.nr_of_4_ships + 1
-                    elif extent == 5:
-                        self.nr_of_5_ships = self.nr_of_5_ships + 1
-                else:
-                    self.gameboard.set_info("You Can't Place A Ship There")
+        if self.nr_of_ships < 5:
+            if self.possible_to_place_ship(row, column, vertical, extent):
+                ship = Ship(row, column, vertical, extent, self.squares, self.rows, self.columns)
+                ship.show_ship()
+                self.ships.append(ship)
+                self.nr_of_ships = self.nr_of_ships + 1
+                if extent == 1:
+                    self.nr_of_1_ships = self.nr_of_1_ships + 1
+                elif extent == 2:
+                    self.nr_of_2_ships = self.nr_of_2_ships + 1
+                elif extent == 3:
+                    self.nr_of_3_ships = self.nr_of_3_ships + 1
+                elif extent == 4:
+                    self.nr_of_4_ships = self.nr_of_4_ships + 1
+                elif extent == 5:
+                    self.nr_of_5_ships = self.nr_of_5_ships + 1
+                self.update_amount_labels()
             else:
-                self.gameboard.set_info("You Have Placed Maximum Amount Of Ships")
-
+                self.gameboard.set_info("You Can't Place A Ship There")
         else:
-            if self.nr_of_ships < 10:
-                if self.possible_to_place_ship(row, column, vertical, extent):
-                    ship = Ship(row, column, vertical, extent, self.squares, self.rows, self.columns)
-                    ship.show_ship()
-                    self.ships.append(ship)
-                    self.nr_of_ships = self.nr_of_ships + 1
-                    if extent == 1:
-                        self.nr_of_1_ships = self.nr_of_1_ships + 1
-                    elif extent == 2:
-                        self.nr_of_2_ships = self.nr_of_2_ships + 1
-                    elif extent == 3:
-                        self.nr_of_3_ships = self.nr_of_3_ships + 1
-                    elif extent == 4:
-                        self.nr_of_4_ships = self.nr_of_4_ships + 1
-                    elif extent == 5:
-                        self.nr_of_5_ships = self.nr_of_5_ships + 1
-                else:
-                    self.gameboard.set_info("You Can't Place A Ship There")
+            self.gameboard.set_info("You Have Placed Maximum Amount Of Ships")
 
+    def update_amount_labels(self):
+        self.lbl_number_of_destroyers["text"] = "Amount of Destroyers: "+str(self.nr_of_1_ships)
+        self.lbl_number_of_cruiser["text"] = "Amount of Cruisers: "+str(self.nr_of_2_ships)
+        self.lbl_number_of_submarines["text"] = "Amount of Submarines: "+str(self.nr_of_3_ships)
+        self.lbl_number_of_battleship["text"] = "Amount of Battlehips: "+str(self.nr_of_4_ships)
+        self.lbl_number_of_carriers["text"] = "Amount of Carriers: " +str(self.nr_of_5_ships)
+        return
 
     #krav för placering av skepp
     def possible_to_place_ship(self, in_x, in_y, vertical, extent):
@@ -495,6 +506,10 @@ class Matrix:
         self.nr_of_3_ships = 0
         self.nr_of_4_ships = 0
         self.nr_of_5_ships = 0
+        for squarerow in self.squares:
+            for square in squarerow:
+                square.remove_ship()
+        self.update_amount_labels()
         return
 
     #Markera diagonaler
@@ -572,6 +587,7 @@ class Matrix:
 
 class Gameboard:
     def __init__(self, master):
+        self.highscores = Highscores()
         self.master    = master
         frame          = Frame(master)
         frame.grid(row = 1, column = 2)
@@ -582,6 +598,9 @@ class Gameboard:
         self.btn_multiplayer.grid(row = 1, column   = 2)
         self.btn_exit_game     = Button(frame, text ="[Exit Game]", command=self.quit)
         self.btn_exit_game.grid(row = 1, column = 10)
+        highscoretext = self.highscores.get_scores()
+        self.lbl_high_score = Label(master,text = highscoretext)
+        self.lbl_high_score.grid(row = 1, column = 11)
         self.current_player = Label(master, text    = "", fg = "green")
         self.current_player.grid(row = 2, column    = 1)
         self.info      = Label(master, text = "", fg = "red")
@@ -624,8 +643,18 @@ class Gameboard:
         self.info["text"] = ""
         return
 
-    def win(self,winning_matrix):
-        self.info["text"] = "Congratulations " + winning_matrix.name + " Won"
+    def win(self,matrix):
+        if matrix == self.matrix2:
+            winning_matrix = self.matrix1
+            losing_matrix  = self.matrix2
+        else:
+            winning_matrix = self.matrix2
+            losing_matrix  = self.matrix1
+        score = losing_matrix.calculate_score()
+        self.info["text"] = "Congratulations " + winning_matrix.name + " Won with score " + str(score)
+        self.highscores.add_score(winning_matrix.name,score)
+        highscoretext = self.highscores.get_scores()
+        self.lbl_high_score["text"] = highscoretext
         self.mode = 40
         return
 
@@ -718,6 +747,7 @@ class Gameboard:
             self.btn_5_ship.grid_forget()
             self.btn_vertical_on_off.grid_forget()
             self.btn_start_game.grid_forget()
+            self.btn_reset_ships.grid_forget()
             # destroy other shipplacer mode = 20 buttons
             self.mode = 30
             self.current   = 1
@@ -747,8 +777,8 @@ class Gameboard:
         self.singleplayer_mode = True
         dialog = MyDialog(self.frame, "Ange ditt namn", "Namn")
         self.frame.wait_window(dialog.top)
-        self.player_one_name = str(dialog.value)
-        self.player_two_name = "CPU"
+        self.player_one_name = "CPU"
+        self.player_two_name = str(dialog.value)
         self.matrix2 = Matrix(self.master, self, 2, False, self.player_two_name)
         self.matrix1 = Matrix(self.master, self, 1, True, self.player_one_name)
         self.start_placing_ships()
@@ -762,10 +792,11 @@ class Gameboard:
         dialog2 = MyDialog(self.frame, "Ange andra spelarns namn", "Namn")
         self.frame.wait_window(dialog2.top)
         self.player_two_name = dialog2.value
-        self.matrix1 = Matrix(self.master, self, 1, False, self.player_two_name)
-        self.matrix2 = Matrix(self.master, self, 2, False, self.player_one_name)
+        self.matrix2 = Matrix(self.master, self, 1, False, self.player_two_name)
+        self.matrix1 = Matrix(self.master, self, 2, False, self.player_one_name)
         self.start_placing_ships()
         return
+
 
     def reset_ships(self):
         self.matrix1.delete_ships()
@@ -801,9 +832,9 @@ class Gameboard:
         self.btn_show_player2_ships.grid(row = 2, column = 8)
         self.btn_show_player1_ships = Button(self.frame, text ="[Show/Hide Player1 Ships]", command = self.show_hide_ship_player2)
         self.btn_show_player1_ships.grid(row = 2, column = 9)
-        self.btn_show_player1_ships["text"] = "Show/Hide " + self.player_one_name +"s" + " Ships"
-        self.btn_show_player2_ships["text"] = "Show/Hide " + self.player_two_name +"s Ships"
-
+        self.btn_show_player2_ships["text"] = "Show/Hide " + self.player_one_name +"s" + " Ships"
+        self.btn_show_player1_ships["text"] = "Show/Hide " + self.player_two_name +"s Ships"
+        self.set_info("Player "+ self.player_two_name +"s turn to place ships")
         self.mode = 20
         return
 
